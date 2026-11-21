@@ -1,0 +1,22 @@
+services:
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      PROVIDER: ${PROVIDER:-fake}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      RATE_LIMIT_REQUESTS: ${RATE_LIMIT_REQUESTS:-10}
+      DAILY_BUDGET_USD: ${DAILY_BUDGET_USD:-1.0}
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
