@@ -93,6 +93,26 @@ Redis 7 on one machine; costs use illustrative prices ($1 / $5 per million token
 Cache hit rate in the second row: 87.7%. Single-flight does not make the first answer faster; it stops 19
 other callers paying for the same call.
 
+## Evidence
+
+Swagger UI against a local run: real Redis 7, fake provider, `RATE_LIMIT_REQUESTS=3`. Same request four times.
+
+**1. First request: a miss.** The model is called and costs `cost_usd`; two requests left in the window.
+
+![miss](docs/01-miss.png)
+
+**2. Same request: a hit.** `"source": "hit"`, no model call, `cost_usd` is 0 and `saved_usd` is what the first call cost.
+
+![hit](docs/02-hit.png)
+
+**3. Fourth request in the window: 429.** `retry_after_seconds` in the body and the `retry-after` header.
+
+![rate limited](docs/03-rate-limited.png)
+
+**4. `/stats`** adds up: 4 requests, 2 hits, 1 miss, 1 rate-limited, hit rate 0.6667.
+
+![stats](docs/04-stats.png)
+
 ## Limitations
 
 - Exact match only. "What is Redis?" and "what's redis" are different keys. Semantic caching (embeddings) is a
